@@ -2,14 +2,21 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>HeartWins — Колесо осознанности</title>
+  <title>HeartWins · Колесо осознанности</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="bg-orbit"></div>
+<canvas id="heartwins"></canvas>
 
-<div class="app-shell">
+<!-- Водяной знак HEARTWINS -->
+<div class="hw-label">HEARTWINS</div>
+
+<!-- Подпись автора -->
+<div class="hw-signature">Lyoubov Touinova™</div>
+
+<!-- UI-оболочка поверх облака точек -->
+<div class="ui-shell">
   <header class="app-header">
     <div class="brand">
       <div class="brand-logo">
@@ -17,20 +24,21 @@
       </div>
       <div class="brand-text">
         <div class="brand-title">HeartWins</div>
-        <div class="brand-subtitle">cloud of awareness</div>
+        <div class="brand-subtitle">awareness protocol</div>
       </div>
     </div>
     <div class="header-right">
-      <span class="header-pill">Колесо осознанности · alpha</span>
+      <span class="header-pill">wheel · karma · quiz</span>
       <button id="logoutBtn" class="btn ghost small" style="display:none;">Выйти</button>
     </div>
   </header>
 
   <main class="app-main">
+    <!-- Экран входа -->
     <section id="authSection" class="panel auth-panel">
-      <h1>Вход в облако HeartWins</h1>
+      <h1>Колесо осознанности</h1>
       <p class="muted">
-        Здесь карма — игровая, а токены осознанности пригодятся позже для реального utility-токена HeartWins.
+        Войди, чтобы копить карму и токены осознанности.
       </p>
 
       <form id="loginForm" class="form">
@@ -38,17 +46,18 @@
         <input id="email" type="email" class="field-input" placeholder="you@example.com" required>
 
         <label class="field-label" for="password">Пароль</label>
-        <input id="password" type="password" class="field-input" placeholder="Минимум 6 символов" required>
+        <input id="password" type="password" class="field-input" placeholder="••••••••" required>
 
         <div class="form-row">
           <button type="submit" class="btn primary">Войти / Зарегистрироваться</button>
         </div>
         <p class="small muted">
-          При первой регистрации мы отправим письмо для подтверждения e-mail. Без подтверждения вход невозможен.
+          При первой регистрации мы пришлём письмо для подтверждения.
         </p>
       </form>
     </section>
 
+    <!-- Основной экран -->
     <section id="mainSection" class="panel main-panel" style="display:none;">
       <div class="main-grid">
         <div class="column">
@@ -59,13 +68,14 @@
                 <div id="profileEmail" class="muted small"></div>
               </div>
             </div>
+
             <div class="stats-row">
               <div class="stat-chip">
-                <div class="stat-label">Карма (игровая)</div>
+                <div class="stat-label">Карма</div>
                 <div id="statKarma" class="stat-value">0</div>
               </div>
               <div class="stat-chip">
-                <div class="stat-label">Токены осознанности</div>
+                <div class="stat-label">Осознанность</div>
                 <div id="statAwareness" class="stat-value">0</div>
               </div>
               <div class="stat-chip">
@@ -77,29 +87,20 @@
             <div class="clicker">
               <div class="clicker-top">
                 <div class="clicker-label">Кликер кармы</div>
-                <div class="clicker-sub">Нажимай, когда хочешь «подружиться» с вниманием, а не убежать от него.</div>
+                <div class="clicker-sub">Один клик — маленький жест внимания.</div>
               </div>
               <button id="karmaClickBtn" class="clicker-btn">
                 👆 Клик-карма<br><span>+1 карма</span>
               </button>
             </div>
           </div>
-
-          <div class="panel-card">
-            <h3>О протоколе</h3>
-            <p class="muted small">
-              Колесо осознанности и викторина создают твой «профиль внимания». Токены осознанности могут
-              стать мостом к реальному utility-токену HeartWins (CosmWasm) — отдельный слой.
-            </p>
-          </div>
         </div>
 
         <div class="column">
           <div class="panel-card">
-            <h2>🎡 Колесо осознанности</h2>
+            <h2>🎡 Колесо</h2>
             <p class="muted small">
-              Это не казино. Здесь нет ставки деньгами — только вниманием. Результатом всегда становится практика:
-              карма, токены или пауза.
+              Спин — и смотри, куда течёт твоя карма.
             </p>
 
             <div class="wheel-layout">
@@ -115,17 +116,16 @@
                 <button id="spinBtn" class="btn primary full">🔄 Крутить колесо</button>
                 <div id="wheelResult" class="wheel-result"></div>
                 <div id="sutraBox" class="sutra-box">
-                  Сутра дня появится после спина.
+                  Сутра появится после спина.
                 </div>
               </div>
             </div>
           </div>
 
           <div class="panel-card">
-            <h2>📚 Викторина осознанности</h2>
+            <h2>📚 Викторина</h2>
             <p class="muted small">
-              Вопросы не про «правильный ответ», а про направление — в сторону уважения, присутствия и ответственности.
-              За верный выбор — токены осознанности.
+              Выбери направление, которое ближе к осознанности.
             </p>
 
             <div id="quizQuote" class="sutra-box quiz-quote">
@@ -144,6 +144,183 @@
   </main>
 </div>
 
+<!-- Скрипт анимации облака точек / сердец -->
+<script>
+(function () {
+  const canvas = document.getElementById('heartwins');
+  const ctx = canvas.getContext('2d');
+
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function heartPointBase(t, scale, cx, cy) {
+    let x = 16 * Math.pow(Math.sin(t), 3);
+    let y = 13 * Math.cos(t)
+          - 5 * Math.cos(2 * t)
+          - 2 * Math.cos(3 * t)
+          - Math.cos(4 * t);
+    return {
+      x: x * scale + cx,
+      y: -y * scale + cy
+    };
+  }
+
+  function heartPointDouble(t, scale, cx, cy, branch) {
+    const p = heartPointBase(t, scale, cx, cy);
+    if (branch === 0) return p;
+    const reflectedY = 2 * cy - p.y;
+    return { x: p.x, y: reflectedY + 12 * scale };
+  }
+
+  const particles = [];
+  const PARTICLE_COUNT = 450;
+
+  function createParticle() {
+    return {
+      t: Math.random() * Math.PI * 2,
+      speed: 0.00007 + Math.random() * 0.00015,
+      branch: Math.random() < 0.5 ? 0 : 1,
+      size: 0.25 + Math.random() * 0.45,
+      life: Math.random(),
+      offsetX: (Math.random() - 0.5) * 0.8,
+      offsetY: (Math.random() - 0.5) * 0.8,
+      prevX: null,
+      prevY: null
+    };
+  }
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(createParticle());
+
+  let lastTime = performance.now();
+  let startTime = lastTime;
+
+  const CYCLE_DURATION = 120000;
+  const MAX_ANGULAR_SPEED_Y = 0.008;
+  const MAX_ANGULAR_SPEED_X = 0.006;
+  const MIN_SPEED_START = 0.4;
+  const MIN_SPEED_END   = 0.02;
+
+  let angleY = 0;
+  let angleX = 0;
+
+  function animate(now) {
+    const dt = now - lastTime;
+    lastTime = now;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    const R = 30;
+    const scale = Math.min(width, height) * 0.9 / (2 * R);
+    const Rpx = R * scale;
+
+    const elapsed = (now - startTime) % CYCLE_DURATION;
+    const phase = elapsed / CYCLE_DURATION;
+
+    let speedFactor;
+    if (phase <= 0.5) {
+      speedFactor = MIN_SPEED_START + (1 - MIN_SPEED_START) * (phase / 0.5);
+    } else {
+      speedFactor = 1 - (1 - MIN_SPEED_END) * ((phase - 0.5) / 0.5);
+    }
+
+    const angularSpeedY = MAX_ANGULAR_SPEED_Y * speedFactor;
+    const angularSpeedX = MAX_ANGULAR_SPEED_X * speedFactor;
+
+    let trailAlpha;
+    if (phase <= 0.5) {
+      const u = phase / 0.5;
+      trailAlpha = 0.018 - 0.01 * u;
+    } else {
+      const u = (phase - 0.5) / 0.5;
+      trailAlpha = 0.008 + (0.8 - 0.008) * u;
+    }
+
+    ctx.fillStyle = `rgba(0,0,0,${trailAlpha})`;
+    ctx.fillRect(0, 0, width, height);
+
+    let dustFactor = phase <= 0.5 ? 1 : 1 - 0.8 * ((phase - 0.5) / 0.5);
+
+    angleY += angularSpeedY * dt;
+    angleX += angularSpeedX * dt;
+
+    const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+    const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+
+    for (let p of particles) {
+      p.t += p.speed * dt;
+      if (p.t > Math.PI * 2) p.t -= Math.PI * 2;
+
+      p.life += 0.0004 * dt;
+      if (p.life > 1) Object.assign(p, createParticle());
+
+      const base = heartPointDouble(p.t, scale, cx, cy, p.branch);
+      let dx = (base.x + p.offsetX * scale) - cx;
+      let dy = (base.y + p.offsetY * scale) - cy;
+      let dz = 0;
+
+      let x1 = dx * cosY + dz * sinY;
+      let z1 = -dx * sinY + dz * cosY;
+
+      let y2 = dy * cosX - z1 * sinX;
+      let z2 = dy * sinX + z1 * cosX;
+
+      let depth = (z2 + Rpx) / (2 * Rpx);
+      depth = Math.max(0, Math.min(1, depth));
+
+      const persp = 0.7 + 0.6 * depth;
+      const sizeDepth = 0.5 + 0.9 * depth;
+      const alphaDepth = 0.2 + 0.8 * depth;
+
+      const xF = cx + x1 * persp;
+      const yF = cy + y2 * persp;
+
+      let r,g,b;
+      if (p.branch === 0) {
+        r = 255; g = 215; b = 0;      // золото
+      } else {
+        r = 255; g = 150; b = 180;    // розовый
+      }
+
+      if (p.prevX != null) {
+        ctx.beginPath();
+        const tailA = 0.25 * alphaDepth * dustFactor;
+        ctx.strokeStyle = `rgba(${r},${g},${b},${tailA})`;
+        ctx.lineWidth = p.size * 2 * sizeDepth * dustFactor;
+        ctx.moveTo(p.prevX, p.prevY);
+        ctx.lineTo(xF, yF);
+        ctx.stroke();
+      }
+
+      p.prevX = xF;
+      p.prevY = yF;
+
+      const alpha = (1 - p.life) * 0.9 * dustFactor * alphaDepth;
+      const radius = p.size * sizeDepth * dustFactor;
+
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.arc(xF, yF, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+})();
+</script>
+
+<!-- Логика приложения -->
 <script src="app.js"></script>
 </body>
 </html>
