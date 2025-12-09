@@ -116,6 +116,7 @@ function authMiddleware(req, res, next) {
 // ===== AUTH ROUTES =====
 
 // SIGNUP c email-подтверждением
+// SIGNUP c "умным" режимом верификации
 app.post("/api/auth/signup", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
@@ -124,11 +125,58 @@ app.post("/api/auth/signup", async (req, res) => {
   if (String(password).length < 6) {
     return res.status(400).json({ error: "Пароль должен быть минимум 6 символов" });
   }
+
   const db = loadDb();
   const existing = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (existing) {
     return res.status(400).json({ error: "Пользователь с такой почтой уже есть" });
   }
+
+  // Если SMTP реально доступен — можем когда-нибудь включить письма.
+  // Сейчас на free Render SMTP-порты заблокированы → делаем авто-verify.
+  const useEmailVerification = !!transporter && process.env.FORCE_EMAIL_VERIFY === "1";
+
+  const verificationToken = useEmailVerification ? generateToken() : null;
+  const expiresAt = useEmailVerification
+    ? Date.now() + 24 * 60 * 60 * 1000
+    : null;
+
+  const user = {
+    id: generateId("usr"),
+    email,
+    passwordHash: hashPassword(password),
+    karma: 0,
+    awareness: 0,
+    quizCorrect: 0,
+    isVerified: !useEmailVerification, // сейчас: сразу подтверждён
+    verificationToken,
+    verificationExpires: expiresAt
+  };
+
+  db.users.push(user);
+  saveDb(db);
+
+  if (useEmailVerification) {
+    try {
+      await sendVerificationEmail(email, verificationToken);
+      return res.json({
+        ok: true,
+        message: "Проверьте email и подтвердите регистрацию."
+      });
+    } catch (e) {
+      console.error("Ошибка отправки письма:", e);
+      return res.status(500).json({
+        error: "Не удалось отправить письмо. Позже попробуйте снова."
+      });
+    }
+  } else {
+    // DEV / alpha: без писем, аккаунт уже активен
+    return res.json({
+      ok: true,
+      message: "E-mail подтверждение временно отключено (alpha). Аккаунт уже активирован."
+    });
+  }
+});
 
   const verificationToken = generateToken();
   const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 часа
