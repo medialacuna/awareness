@@ -131,6 +131,54 @@ app.post("/api/auth/signup", async (req, res) => {
   if (existing) {
     return res.status(400).json({ error: "Пользователь с такой почтой уже есть" });
   }
+// Телеграм-авторизация (упрощённо: доверяем прокинутому ID)
+app.post("/api/auth/telegram", (req, res) => {
+  const { telegramId, firstName, username } = req.body || {};
+  if (!telegramId) {
+    return res.status(400).json({ error: "Нет telegramId" });
+  }
+
+  const db = loadDb();
+  let user = db.users.find(u => u.telegramId === String(telegramId));
+
+  // если уже есть — используем
+  if (!user) {
+    // авто-регистрация
+    user = {
+      id: generateId("usr"),
+      email: null,              // нет email
+      passwordHash: null,       // нет пароля
+      telegramId: String(telegramId),
+      telegramUsername: username || null,
+      telegramName: firstName || null,
+      karma: 0,
+      awareness: 0,
+      quizCorrect: 0,
+      isVerified: true,         // телега сама даёт идентичность
+      verificationToken: null,
+      verificationExpires: null
+    };
+    db.users.push(user);
+  }
+
+  const token = generateToken();
+  db.tokens[token] = user.id;
+  saveDb(db);
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      karma: user.karma,
+      awareness: user.awareness,
+      quizCorrect: user.quizCorrect,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      telegramName: user.telegramName
+    }
+  });
+});
 
   // Если SMTP реально доступен — можем когда-нибудь включить письма.
   // Сейчас на free Render SMTP-порты заблокированы → делаем авто-verify.
