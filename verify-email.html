@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Подтверждение e-mail — HeartWins</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-orbit"></div>
+<div class="app-shell">
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <span>❤</span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">HeartWins</div>
+        <div class="brand-subtitle">cloud of awareness</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="panel auth-panel">
+      <h1>Подтверждение e-mail</h1>
+      <p class="muted" id="verifyMessage">
+        Проверяем токен подтверждения...
+      </p>
+      <button id="goHomeBtn" class="btn primary" style="display:none;">Перейти в приложение</button>
+    </section>
+  </main>
+</div>
+
+<script>
+  const API_BASE = "";
+
+  function getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
+  async function api(path, opts = {}) {
+    const headers = opts.headers || {};
+    if (!(opts.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+    const res = await fetch(API_BASE + path, {
+      ...opts,
+      headers,
+      body: opts.body && !(opts.body instanceof FormData)
+        ? JSON.stringify(opts.body)
+        : opts.body
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || data.message || "Ошибка запроса");
+    }
+    return data;
+  }
+
+  async function verify() {
+    const token = getQueryParam("token");
+    const msgEl = document.getElementById("verifyMessage");
+    const btn = document.getElementById("goHomeBtn");
+
+    if (!token) {
+      msgEl.textContent = "Токен не найден. Проверьте ссылку из письма.";
+      return;
+    }
+
+    try {
+      const data = await api("/api/auth/verify-email?token=" + encodeURIComponent(token), {
+        method: "GET"
+      });
+      // Сохраняем токен для автологина
+      localStorage.setItem("hw_awareness_token", data.token);
+      msgEl.textContent = "E-mail успешно подтверждён. Можно входить в Колесо осознанности.";
+      btn.style.display = "inline-flex";
+      btn.addEventListener("click", () => {
+        window.location.href = "/";
+      });
+    } catch (e) {
+      msgEl.textContent = "Ошибка подтверждения: " + (e.message || "неизвестная ошибка");
+    }
+  }
+
+  verify();
+</script>
+</body>
+</html>
