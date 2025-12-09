@@ -179,6 +179,52 @@ app.post("/api/auth/telegram", (req, res) => {
     }
   });
 });
+// VK Mini App авторизация (упрощённо)
+app.post("/api/auth/vk", (req, res) => {
+  const { vkId, firstName, lastName, username } = req.body || {};
+  if (!vkId) {
+    return res.status(400).json({ error: "Нет vkId" });
+  }
+
+  const db = loadDb();
+  let user = db.users.find(u => u.vkId === String(vkId));
+
+  if (!user) {
+    user = {
+      id: generateId("usr"),
+      email: null,
+      passwordHash: null,
+      vkId: String(vkId),
+      vkUsername: username || null,
+      vkName: [firstName, lastName].filter(Boolean).join(" "),
+      karma: 0,
+      awareness: 0,
+      quizCorrect: 0,
+      isVerified: true,
+      verificationToken: null,
+      verificationExpires: null
+    };
+    db.users.push(user);
+  }
+
+  const token = generateToken();
+  db.tokens[token] = user.id;
+  saveDb(db);
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      karma: user.karma,
+      awareness: user.awareness,
+      quizCorrect: user.quizCorrect,
+      vkId: user.vkId,
+      vkUsername: user.vkUsername,
+      vkName: user.vkName
+    }
+  });
+});
 
   // Если SMTP реально доступен — можем когда-нибудь включить письма.
   // Сейчас на free Render SMTP-порты заблокированы → делаем авто-verify.
