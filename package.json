@@ -1,0 +1,15 @@
+{
+  "name": "heartwins-awareness-app",
+  "version": "1.0.0",
+  "description": "HeartWins — Колесо осознанности (frontend + backend для Render)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "nodemailer": "^6.9.8"
+  }
+}
