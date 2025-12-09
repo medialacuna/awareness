@@ -1,0 +1,67 @@
+HEARTWINS DAO PROPRIETARY LICENSE v1.0
+
+(Full exclusive rights — no permission granted)
+© 2025 Lyoubov Touinova / HeartWins DAO — All Rights Reserved
+HEARTWINS DAO PROPRIETARY LICENSE v1.0
+Copyright (c) 2025
+Lyoubov Touinova / HeartWins DAO
+All Rights Reserved.
+
+1. GENERAL RESTRICTION
+The Software contained in this repository is proprietary. 
+No rights are granted to any user except those explicitly written here.
+
+Unless you have explicit written permission from the Author 
+(Lyoubov Touinova) or HeartWins DAO governance (once active),
+YOU MAY NOT:
+
+  - copy the Software,
+  - modify the Software,
+  - distribute the Software,
+  - sublicense the Software,
+  - resell or monetize the Software,
+  - use the Software in any commercial or financial product,
+  - deploy the Software publicly (including hosting, SaaS, or blockchain),
+  - derive or create derivative works from the Software,
+  - use the Software for research, training AI models, or automated extraction,
+  - integrate the Software into other applications or services.
+
+Any action not expressly permitted here is strictly prohibited.
+
+2. PERSONAL VIEWING
+You may only view the source code for personal reading and learning, 
+without reproducing or applying it anywhere.
+
+This does NOT give you any usage rights of any kind.
+
+3. BLOCKCHAIN, TOKEN, OR FINANCIAL USE
+Any use of this Software for blockchain deployment, token issuance,
+staking mechanics, or financial reward systems is strictly prohibited
+without a direct written license agreement.
+
+4. BRANDING, TRADEMARKS, CONCEPTS
+The following remain the exclusive intellectual property of the Author:
+  - HeartWins ecosystem concepts,
+  - HeartWins DAO governance model,
+  - HeartWins visual style, brand, symbols,
+  - awareness token design,
+  - Wheel of Awareness mechanics,
+  - KarMIC clicker logic, quiz structures, UI/UX patterns.
+
+No permission is granted to reuse or adapt these elements.
+
+5. WARRANTY & LIABILITY
+The Software is provided “AS IS”. The Author and DAO hold no responsibility 
+for any damages, losses, or misuse related to viewing or accessing the code.
+
+6. TERMINATION
+Violation of any clause immediately terminates all rights.
+Upon termination you must delete all copies of the Software in your possession.
+
+7. CONTACT FOR LICENSING
+To request a special commercial license, partnership or integration rights:
+Email: heartwins.dao@gmail.com
+Author: Lyoubov Touinova
+
+---------------------------------
+END OF LICENSE
