@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>HeartWins — Колесо осознанности</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-orbit"></div>
+
+<div class="app-shell">
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <span>❤</span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">HeartWins</div>
+        <div class="brand-subtitle">cloud of awareness</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="header-pill">Колесо осознанности · alpha</span>
+      <button id="logoutBtn" class="btn ghost small" style="display:none;">Выйти</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="authSection" class="panel auth-panel">
+      <h1>Вход в облако HeartWins</h1>
+      <p class="muted">
+        Здесь карма — игровая, а токены осознанности пригодятся позже для реального utility-токена HeartWins.
+      </p>
+
+      <form id="loginForm" class="form">
+        <label class="field-label" for="email">Эл. почта</label>
+        <input id="email" type="email" class="field-input" placeholder="you@example.com" required>
+
+        <label class="field-label" for="password">Пароль</label>
+        <input id="password" type="password" class="field-input" placeholder="Минимум 6 символов" required>
+
+        <div class="form-row">
+          <button type="submit" class="btn primary">Войти / Зарегистрироваться</button>
+        </div>
+        <p class="small muted">
+          При первой регистрации мы отправим письмо для подтверждения e-mail. Без подтверждения вход невозможен.
+        </p>
+      </form>
+    </section>
+
+    <section id="mainSection" class="panel main-panel" style="display:none;">
+      <div class="main-grid">
+        <div class="column">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div>
+                <h2 id="profileGreeting">Привет!</h2>
+                <div id="profileEmail" class="muted small"></div>
+              </div>
+            </div>
+            <div class="stats-row">
+              <div class="stat-chip">
+                <div class="stat-label">Карма (игровая)</div>
+                <div id="statKarma" class="stat-value">0</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-label">Токены осознанности</div>
+                <div id="statAwareness" class="stat-value">0</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-label">Верных ответов</div>
+                <div id="statQuiz" class="stat-value">0</div>
+              </div>
+            </div>
+
+            <div class="clicker">
+              <div class="clicker-top">
+                <div class="clicker-label">Кликер кармы</div>
+                <div class="clicker-sub">Нажимай, когда хочешь «подружиться» с вниманием, а не убежать от него.</div>
+              </div>
+              <button id="karmaClickBtn" class="clicker-btn">
+                👆 Клик-карма<br><span>+1 карма</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h3>О протоколе</h3>
+            <p class="muted small">
+              Колесо осознанности и викторина создают твой «профиль внимания». Токены осознанности могут
+              стать мостом к реальному utility-токену HeartWins (CosmWasm) — отдельный слой.
+            </p>
+          </div>
+        </div>
+
+        <div class="column">
+          <div class="panel-card">
+            <h2>🎡 Колесо осознанности</h2>
+            <p class="muted small">
+              Это не казино. Здесь нет ставки деньгами — только вниманием. Результатом всегда становится практика:
+              карма, токены или пауза.
+            </p>
+
+            <div class="wheel-layout">
+              <div class="wheel-wrap">
+                <div class="wheel" id="wheelVisual">
+                  <div class="wheel-pointer"></div>
+                  <div class="wheel-center">
+                    Вдох<br>Выдох<br><span>наблюдай</span>
+                  </div>
+                </div>
+              </div>
+              <div class="wheel-side">
+                <button id="spinBtn" class="btn primary full">🔄 Крутить колесо</button>
+                <div id="wheelResult" class="wheel-result"></div>
+                <div id="sutraBox" class="sutra-box">
+                  Сутра дня появится после спина.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h2>📚 Викторина осознанности</h2>
+            <p class="muted small">
+              Вопросы не про «правильный ответ», а про направление — в сторону уважения, присутствия и ответственности.
+              За верный выбор — токены осознанности.
+            </p>
+
+            <div id="quizQuote" class="sutra-box quiz-quote">
+              Нажми «Новый вопрос», чтобы начать.
+            </div>
+            <p id="quizQuestion" class="quiz-question-text"></p>
+            <div id="quizOptions" class="quiz-options"></div>
+            <div class="quiz-controls">
+              <button id="newQuestionBtn" class="btn ghost small">✨ Новый вопрос</button>
+            </div>
+            <div id="quizStatus" class="quiz-status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
