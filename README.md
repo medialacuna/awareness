@@ -1,6 +1,4 @@
-# HeartWins — Колесо осознанности (alpha)
-
-Полный демо-проект для деплоя на Render:
+# HeartWins — Колесо осознанности
 
 - Node.js + Express backend (`server.js`)
 - Хранение пользователей в `users.json` (файловая "БД")
