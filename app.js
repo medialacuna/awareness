@@ -178,6 +178,39 @@ function spawnClickParticles(containerEl, count = 7) {
     setTimeout(() => span.remove(), 650);
   }
 }
+function isVKMiniApp() {
+  return typeof window.vkBridge !== "undefined";
+}
+
+async function vkAutoLogin() {
+  if (!isVKMiniApp()) return;
+
+  try {
+    const bridge = window.vkBridge;
+    await bridge.send("VKWebAppInit");
+    const userInfo = await bridge.send("VKWebAppGetUserInfo");
+
+    const data = await api("/api/auth/vk", {
+      method: "POST",
+      body: {
+        vkId: userInfo.id,
+        firstName: userInfo.first_name,
+        lastName: userInfo.last_name,
+        username: userInfo.screen_name || null
+      }
+    });
+
+    setToken(data.token);
+    currentUser = data.user;
+    updateUserUI();
+    showMain(true);
+
+    const authSection = document.getElementById("authSection");
+    if (authSection) authSection.style.display = "none";
+  } catch (e) {
+    console.error("Ошибка VK логина", e);
+  }
+}
 
 /* ===== AUTH ===== */
 
