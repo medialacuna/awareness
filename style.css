@@ -463,3 +463,9 @@ body {
   font-size: 12px;
   min-height: 18px;
 }
+/* В самый конец файла можно добавить: */
+#tgAuthStatus {
+  margin-top: 20px;
+  font-size: 16px;
+  text-align: center;
+}
