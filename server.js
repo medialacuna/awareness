@@ -30,10 +30,53 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
       pass: SMTP_PASS
     }
   });
-  console.log("SMTP transporter initialized");
-} else {
-  console.warn("SMTP not fully configured; email verification will NOT be sent.");
-}
+// Удалены:
+// app.post("/api/auth/signup", ...)
+// app.post("/api/auth/login", ...)
+// app.get("/api/auth/verify-email", ...)
+
+// Оставляем Telegram, VK (если нужно) и защищённые маршруты
+app.post("/api/auth/telegram", (req, res) => {
+  const { telegramId, firstName, lastName, username } = req.body || {};
+  if (!telegramId) {
+    return res.status(400).json({ error: "Нет telegramId" });
+  }
+
+  const db = loadDb();
+  let user = db.users.find(u => u.telegramId === String(telegramId));
+
+  if (!user) {
+    user = {
+      id: generateId("usr"),
+      telegramId: String(telegramId),
+      telegramUsername: username || null,
+      telegramName: [firstName, lastName].filter(Boolean).join(" "),
+      karma: 0,
+      awareness: 0,
+      quizCorrect: 0
+    };
+    db.users.push(user);
+  }
+
+  const token = generateToken();
+  db.tokens[token] = user.id;
+  saveDb(db);
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      telegramName: user.telegramName,
+      karma: user.karma,
+      awareness: user.awareness,
+      quizCorrect: user.quizCorrect
+    }
+  });
+});
+
+// При необходимости удалите или закомментируйте VK-эндпоинт.
 
 // ===== MIDDLEWARE =====
 app.use(bodyParser.json());
