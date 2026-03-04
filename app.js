@@ -1,3 +1,71 @@
+// ===== TELEGRAM AUTOLOGIN =====
+async function tgAutoLogin() {
+  const statusEl = document.getElementById("tgAuthStatus");
+  if (!statusEl) return;
+
+  try {
+    // Проверяем, запущено ли приложение в Telegram
+    if (typeof window.Telegram === 'undefined' || !window.Telegram.WebApp) {
+      statusEl.textContent = "❌ Это приложение работает только в Telegram Mini App.";
+      return;
+    }
+
+    const tg = window.Telegram.WebApp;
+    tg.ready(); // сообщаем Telegram, что приложение готово
+
+    const initData = tg.initDataUnsafe;
+    if (!initData || !initData.user) {
+      statusEl.textContent = "❌ Не удалось получить данные пользователя Telegram.";
+      return;
+    }
+
+    const user = initData.user;
+    statusEl.textContent = "⏳ Авторизация...";
+
+    const data = await api("/api/auth/telegram", {
+      method: "POST",
+      body: {
+        telegramId: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name || '',
+        username: user.username || null
+      }
+    });
+
+    setToken(data.token);
+    currentUser = data.user;
+    updateUserUI();
+    showMain(true);
+    tg.expand(); // растягиваем на весь экран
+  } catch (e) {
+    console.error("Telegram auth error:", e);
+    statusEl.textContent = "❌ Ошибка авторизации. Попробуйте перезапустить приложение.";
+  }
+}
+
+// Запуск при загрузке
+(async function init() {
+  const token = localStorage.getItem("hw_awareness_token");
+  if (token) {
+    setToken(token);
+    try {
+      const user = await api("/api/user/me");
+      currentUser = user;
+      updateUserUI();
+      showMain(true);
+      if (window.Telegram?.WebApp) window.Telegram.WebApp.expand();
+      return;
+    } catch (e) {
+      // токен невалидный — удаляем и пытаемся через Telegram
+      setToken(null);
+    }
+  }
+  // Нет токена или он невалидный — запускаем Telegram-авторизацию
+  tgAutoLogin();
+})();
+
+// Удаляем обработчик loginForm
+// loginForm.removeEventListener... (можно просто убрать код)
 const API_BASE = ""; // same origin
 
 let authToken = null;
