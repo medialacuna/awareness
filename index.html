@@ -33,20 +33,19 @@
         Здесь карма — игровая, а токены осознанности пригодятся позже для реального utility-токена HeartWins.
       </p>
 
-      <form id="loginForm" class="form">
-        <label class="field-label" for="email">Эл. почта</label>
-        <input id="email" type="email" class="field-input" placeholder="you@example.com" required>
-
-        <label class="field-label" for="password">Пароль</label>
-        <input id="password" type="password" class="field-input" placeholder="Минимум 6 символов" required>
-
-        <div class="form-row">
-          <button type="submit" class="btn primary">Войти / Зарегистрироваться</button>
-        </div>
-        <p class="small muted">
-          При первой регистрации мы отправим письмо для подтверждения e-mail. Без подтверждения вход невозможен.
-        </p>
-      </form>
+      <head>
+  ...
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  ...
+  <section id="authSection" class="panel auth-panel">
+    <h1>HeartWins в Telegram</h1>
+    <p class="muted" id="tgAuthStatus">Подключаемся к Telegram...</p>
+    <!-- форма loginForm полностью удалена -->
+  </section>
+  ...
+</body>
     </section>
 
     <section id="mainSection" class="panel main-panel" style="display:none;">
