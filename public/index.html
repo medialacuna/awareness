@@ -6,128 +6,546 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Three.js для WebGL-слоя анимации -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 </head>
 <body>
-<div class="bg-orbit"></div>
+  <!-- Два канваса для анимации (та же структура, что в примере) -->
+  <canvas id="glLayer"></canvas>
+  <canvas id="heartwins"></canvas>
 
-<div class="app-shell">
-  <header class="app-header">
-    <div class="brand">
-      <div class="brand-logo">
-        <span>❤</span>
-      </div>
-      <div class="brand-text">
-        <div class="brand-title">HeartWins</div>
-        <div class="brand-subtitle">cloud of awareness</div>
-      </div>
-    </div>
-    <div class="header-right">
-      <span class="header-pill">Колесо осознанности · alpha</span>
-      <button id="logoutBtn" class="btn ghost small" style="display:none;">Выйти</button>
-    </div>
-  </header>
-
-  <main class="app-main">
-    <section id="authSection" class="panel auth-panel">
-      <h1>HeartWins в Telegram</h1>
-      <p class="muted" id="tgAuthStatus">Подключаемся к Telegram...</p>
-    </section>
-
-    <section id="mainSection" class="panel main-panel" style="display:none;">
-      <div class="main-grid">
-        <div class="column">
-          <div class="panel-card">
-            <div class="panel-card-header">
-              <div>
-                <h2 id="profileGreeting">Привет!</h2>
-                <div id="profileEmail" class="muted small"></div>
-              </div>
-            </div>
-            <div class="stats-row">
-              <div class="stat-chip">
-                <div class="stat-label">Карма (игровая)</div>
-                <div id="statKarma" class="stat-value">0</div>
-              </div>
-              <div class="stat-chip">
-                <div class="stat-label">Токены осознанности</div>
-                <div id="statAwareness" class="stat-value">0</div>
-              </div>
-              <div class="stat-chip">
-                <div class="stat-label">Верных ответов</div>
-                <div id="statQuiz" class="stat-value">0</div>
-              </div>
-            </div>
-
-            <div class="clicker">
-              <div class="clicker-top">
-                <div class="clicker-label">Кликер кармы</div>
-                <div class="clicker-sub">Нажимай, когда хочешь «подружиться» с вниманием, а не убежать от него.</div>
-              </div>
-              <button id="karmaClickBtn" class="clicker-btn">
-                👆 Клик-карма<br><span>+1 карма</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="panel-card">
-            <h3>О протоколе</h3>
-            <p class="muted small">
-              Колесо осознанности и викторина создают твой «профиль внимания». Токены осознанности могут
-              стать мостом к реальному utility-токену HeartWins (CosmWasm) — отдельный слой.
-            </p>
-          </div>
+  <!-- Основной интерфейс приложения (без изменений) -->
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <span>❤</span>
         </div>
+        <div class="brand-text">
+          <div class="brand-title">HeartWins</div>
+          <div class="brand-subtitle">cloud of awareness</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-pill">Колесо осознанности · alpha</span>
+        <button id="logoutBtn" class="btn ghost small" style="display:none;">Выйти</button>
+      </div>
+    </header>
 
-        <div class="column">
-          <div class="panel-card">
-            <h2>🎡 Колесо осознанности</h2>
-            <p class="muted small">
-              Это не казино. Здесь нет ставки деньгами — только вниманием. Результатом всегда становится практика:
-              карма, токены или пауза.
-            </p>
+    <main class="app-main">
+      <!-- Секция авторизации (только для Telegram) -->
+      <section id="authSection" class="panel auth-panel">
+        <h1>HeartWins в Telegram</h1>
+        <p class="muted" id="tgAuthStatus">Подключаемся к Telegram...</p>
+      </section>
 
-            <div class="wheel-layout">
-              <div class="wheel-wrap">
-                <div class="wheel" id="wheelVisual">
-                  <div class="wheel-pointer"></div>
-                  <div class="wheel-center">
-                    Вдох<br>Выдох<br><span>наблюдай</span>
+      <!-- Основная секция (игровая) -->
+      <section id="mainSection" class="panel main-panel" style="display:none;">
+        <div class="main-grid">
+          <!-- Левая колонка -->
+          <div class="column">
+            <div class="panel-card">
+              <div class="panel-card-header">
+                <div>
+                  <h2 id="profileGreeting">Привет!</h2>
+                  <div id="profileEmail" class="muted small"></div>
+                </div>
+              </div>
+              <div class="stats-row">
+                <div class="stat-chip">
+                  <div class="stat-label">Карма (игровая)</div>
+                  <div id="statKarma" class="stat-value">0</div>
+                </div>
+                <div class="stat-chip">
+                  <div class="stat-label">Токены осознанности</div>
+                  <div id="statAwareness" class="stat-value">0</div>
+                </div>
+                <div class="stat-chip">
+                  <div class="stat-label">Верных ответов</div>
+                  <div id="statQuiz" class="stat-value">0</div>
+                </div>
+              </div>
+
+              <div class="clicker">
+                <div class="clicker-top">
+                  <div class="clicker-label">Кликер кармы</div>
+                  <div class="clicker-sub">Нажимай, когда хочешь «подружиться» с вниманием, а не убежать от него.</div>
+                </div>
+                <button id="karmaClickBtn" class="clicker-btn">
+                  👆 Клик-карма<br><span>+1 карма</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel-card">
+              <h3>О протоколе</h3>
+              <p class="muted small">
+                Колесо осознанности и викторина создают твой «профиль внимания». Токены осознанности могут
+                стать мостом к реальному utility-токену HeartWins (CosmWasm) — отдельный слой.
+              </p>
+            </div>
+          </div>
+
+          <!-- Правая колонка -->
+          <div class="column">
+            <div class="panel-card">
+              <h2>🎡 Колесо осознанности</h2>
+              <p class="muted small">
+                Это не казино. Здесь нет ставки деньгами — только вниманием. Результатом всегда становится практика:
+                карма, токены или пауза.
+              </p>
+
+              <div class="wheel-layout">
+                <div class="wheel-wrap">
+                  <div class="wheel" id="wheelVisual">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel-center">
+                      Вдох<br>Выдох<br><span>наблюдай</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="wheel-side">
+                  <button id="spinBtn" class="btn primary full">🔄 Крутить колесо</button>
+                  <div id="wheelResult" class="wheel-result"></div>
+                  <div id="sutraBox" class="sutra-box">
+                    Сутра дня появится после спина.
                   </div>
                 </div>
               </div>
-              <div class="wheel-side">
-                <button id="spinBtn" class="btn primary full">🔄 Крутить колесо</button>
-                <div id="wheelResult" class="wheel-result"></div>
-                <div id="sutraBox" class="sutra-box">
-                  Сутра дня появится после спина.
-                </div>
+            </div>
+
+            <div class="panel-card">
+              <h2>📚 Викторина осознанности</h2>
+              <p class="muted small">
+                Вопросы не про «правильный ответ», а про направление — в сторону уважения, присутствия и ответственности.
+                За верный выбор — токены осознанности.
+              </p>
+
+              <div id="quizQuote" class="sutra-box quiz-quote">
+                Нажми «Новый вопрос», чтобы начать.
               </div>
+              <p id="quizQuestion" class="quiz-question-text"></p>
+              <div id="quizOptions" class="quiz-options"></div>
+              <div class="quiz-controls">
+                <button id="newQuestionBtn" class="btn ghost small">✨ Новый вопрос</button>
+              </div>
+              <div id="quizStatus" class="quiz-status"></div>
             </div>
-          </div>
-
-          <div class="panel-card">
-            <h2>📚 Викторина осознанности</h2>
-            <p class="muted small">
-              Вопросы не про «правильный ответ», а про направление — в сторону уважения, присутствия и ответственности.
-              За верный выбор — токены осознанности.
-            </p>
-
-            <div id="quizQuote" class="sutra-box quiz-quote">
-              Нажми «Новый вопрос», чтобы начать.
-            </div>
-            <p id="quizQuestion" class="quiz-question-text"></p>
-            <div id="quizOptions" class="quiz-options"></div>
-            <div class="quiz-controls">
-              <button id="newQuestionBtn" class="btn ghost small">✨ Новый вопрос</button>
-            </div>
-            <div id="quizStatus" class="quiz-status"></div>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
-</div>
+      </section>
+    </main>
+  </div>
 
-<script src="app.js"></script>
+  <!-- Подпись by lyoubov touinova (внизу справа) -->
+  <div class="signature">by lyoubov touinova</div>
+
+  <!-- Скрипт анимации (адаптированный второй пример) -->
+  <script>
+    (function() {
+      // ---------- Канвасы ----------
+      const canvas2D = document.getElementById('heartwins');
+      const ctx = canvas2D.getContext('2d');
+      const glCanvas = document.getElementById('glLayer');
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      // Эра меняется автоматически (0..1) по синусоиде
+      let eraValue = 0;
+
+      // ---------- Вспомогательные функции ----------
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas2D.width = width * dpr;
+        canvas2D.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        if (renderer) {
+          renderer.setPixelRatio(dpr);
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        }
+      }
+      window.addEventListener('resize', resize);
+
+      const TWO_PI = Math.PI * 2;
+      const STAGES_2D = 7; // 0..7 (8 форм)
+
+      function getBaseScale() {
+        return Math.min(width, height) * 0.018;
+      }
+
+      function fract(x) {
+        return x - Math.floor(x);
+      }
+
+      // ---------- Геометрия сердца и ∞ ----------
+      function heartPointBase(t, scale, cx, cy) {
+        let x = 16 * Math.pow(Math.sin(t), 3);
+        let y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+        x = x * scale + cx;
+        y = -y * scale + cy;
+        return { x, y };
+      }
+
+      function heartPointDouble(t, scale, cx, cy, branch) {
+        const p = heartPointBase(t, scale, cx, cy);
+        if (branch === 0) return p;
+        const reflectedY = 2 * cy - p.y;
+        const offset = 12 * scale;
+        return { x: p.x, y: reflectedY + offset };
+      }
+
+      function lemniscate(t) {
+        const a = 1;
+        const denom = 1 + Math.sin(t) * Math.sin(t);
+        return {
+          x: (a * Math.cos(t)) / denom,
+          y: (a * Math.sin(t) * Math.cos(t)) / denom
+        };
+      }
+
+      // ---------- 2D-частицы ----------
+      const particles = [];
+      const PARTICLE_COUNT = 1300;
+
+      function createParticle() {
+        const s = Math.random();
+        return {
+          s,
+          branch: s < 0.5 ? 0 : 1,
+          size: 0.12 + Math.random() * 0.45,
+          hueShift: Math.random(),
+          jitterX: (Math.random() - 0.5),
+          jitterY: (Math.random() - 0.5),
+          twinklePhase: Math.random() * TWO_PI
+        };
+      }
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push(createParticle());
+      }
+
+      // 2D-аттрактор
+      const attractor2D = new Float32Array(PARTICLE_COUNT * 2);
+      (function initAttractor2D() {
+        const a = -1.4, b = 1.6, c = 1.0, d = 0.7;
+        let x = 0.1, y = 0.0;
+        for (let i = 0; i < 1000; i++) {
+          const nx = Math.sin(a * y) + c * Math.cos(a * x);
+          const ny = Math.sin(b * x) + d * Math.cos(b * y);
+          x = nx; y = ny;
+        }
+        const scaleAttr = 35;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const nx = Math.sin(a * y) + c * Math.cos(a * x);
+          const ny = Math.sin(b * x) + d * Math.cos(b * y);
+          x = nx; y = ny;
+          const idx = i * 2;
+          attractor2D[idx]   = x * scaleAttr;
+          attractor2D[idx+1] = y * scaleAttr * 0.8;
+        }
+      })();
+
+      // Функция положения частицы в зависимости от стадии
+      function shapePosition(stage, s, cx, cy, baseScale) {
+        const geoR = baseScale * 13;
+        const branch = s < 0.5 ? 0 : 1;
+        const sub = (s * 4.123);
+        const angle = TWO_PI * fract(sub);
+        const rRand = fract(sub * 7.77);
+
+        if (stage <= 0) return { x: cx, y: cy };
+
+        if (stage === 1) {
+          const rFactor = Math.sqrt(rRand);
+          const R = geoR * 0.8;
+          return {
+            x: cx + Math.cos(angle) * R * rFactor,
+            y: cy + Math.sin(angle) * R * rFactor
+          };
+        }
+
+        if (stage === 2) {
+          const baseR = geoR * 0.95;
+          const ringWidth = baseScale * 2.0;
+          const radius = baseR + (rRand - 0.5) * ringWidth;
+          return {
+            x: cx + Math.cos(angle) * radius,
+            y: cy + Math.sin(angle) * radius
+          };
+        }
+
+        if (stage === 3) {
+          const u = s;
+          const R = geoR * 0.9;
+          return {
+            x: cx + (u - 0.5) * 2 * R,
+            y: cy + (rRand - 0.5) * baseScale * 0.8
+          };
+        }
+
+        if (stage === 4) {
+          const idx = Math.floor(s * 4);
+          const localU = fract(s * 4);
+          const localAngle = TWO_PI * localU;
+          const offset = geoR * 0.9;
+          let centerX = cx, centerY = cy;
+          if (idx === 0) centerY -= offset;
+          else if (idx === 1) centerX += offset;
+          else if (idx === 2) centerY += offset;
+          else centerX -= offset;
+          const r = geoR * 0.65;
+          return {
+            x: centerX + Math.cos(localAngle) * r,
+            y: centerY + Math.sin(localAngle) * r
+          };
+        }
+
+        if (stage === 5) {
+          const localBranch = branch;
+          const localU = branch === 0 ? (s * 2) : ((s - 0.5) * 2);
+          const t = TWO_PI * localU;
+          const L = lemniscate(t);
+          const scaleInfty = geoR * 0.6;
+          const sep = geoR * 0.9;
+          const x = L.x * scaleInfty * 1.3;
+          const y = L.y * scaleInfty * 0.8 + (localBranch === 0 ? -sep : +sep);
+          return { x: cx + x, y: cy + y };
+        }
+
+        if (stage === 6) {
+          const localBranch = branch;
+          const localU = branch === 0 ? (s * 2) : ((s - 0.5) * 2);
+          const t = TWO_PI * localU;
+          return heartPointDouble(t, baseScale, cx, cy, localBranch);
+        }
+
+        // stage >= 7 — 2D-аттрактор
+        const idx2 = Math.min(PARTICLE_COUNT - 1, Math.floor(s * PARTICLE_COUNT));
+        const ax = attractor2D[idx2 * 2];
+        const ay = attractor2D[idx2 * 2 + 1];
+        const k = 1.1;
+        return { x: cx + ax * k, y: cy + ay * k };
+      }
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function getMorphPosition(progress, s, cx, cy, baseScale) {
+        if (progress <= 0) return shapePosition(0, s, cx, cy, baseScale);
+        if (progress >= STAGES_2D) return shapePosition(STAGES_2D, s, cx, cy, baseScale);
+
+        const stage = Math.floor(progress);
+        const local = progress - stage;
+        const k = easeInOutCubic(local);
+        const a = shapePosition(stage, s, cx, cy, baseScale);
+        const b = shapePosition(stage + 1, s, cx, cy, baseScale);
+        return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+      }
+
+      // ---------- WebGL: 3D-слой (тор, аттрактор) ----------
+      let renderer, scene, camera, points,
+          heartPositions3D, torusPositions3D, attractorPositions3D, positionsAttr;
+
+      function initWebGL() {
+        renderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true });
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.z = 140;
+
+        const num = 3000;
+        const geometry = new THREE.BufferGeometry();
+
+        heartPositions3D = new Float32Array(num * 3);
+        torusPositions3D = new Float32Array(num * 3);
+        attractorPositions3D = new Float32Array(num * 3);
+        const positions = new Float32Array(num * 3);
+
+        const scale3D = 3.5;
+        for (let i = 0; i < num; i++) {
+          const s = i / num;
+          const branch = s < 0.5 ? 0 : 1;
+          const localU = branch === 0 ? (s * 2) : ((s - 0.5) * 2);
+          const t = localU * TWO_PI;
+          const p = heartPointBase(t, scale3D, 0, 0);
+          const heartY = branch === 0 ? p.y : (2 * 0 - p.y) + 12 * scale3D;
+          const hi = i * 3;
+          heartPositions3D[hi] = p.x;
+          heartPositions3D[hi + 1] = heartY;
+          heartPositions3D[hi + 2] = 0;
+        }
+
+        const R = 40, r = 12, offsetY = 32;
+        for (let i = 0; i < num; i++) {
+          const branch = i < num / 2 ? 0 : 1;
+          const u = Math.random() * TWO_PI;
+          const v = Math.random() * TWO_PI;
+          const x = (R + r * Math.cos(v)) * Math.cos(u);
+          const z = (R + r * Math.cos(v)) * Math.sin(u);
+          const y = r * Math.sin(v) + (branch === 0 ? offsetY : -offsetY);
+          const hi = i * 3;
+          torusPositions3D[hi] = x;
+          torusPositions3D[hi + 1] = y;
+          torusPositions3D[hi + 2] = z;
+        }
+
+        const a = -1.4, b = 1.6, c = 1.0, d = 0.7;
+        let x = 0.1, y = 0.0;
+        for (let i = 0; i < 1000; i++) {
+          const nx = Math.sin(a * y) + c * Math.cos(a * x);
+          const ny = Math.sin(b * x) + d * Math.cos(b * y);
+          x = nx; y = ny;
+        }
+        const scaleAttr = 35;
+        for (let i = 0; i < num; i++) {
+          const nx = Math.sin(a * y) + c * Math.cos(a * x);
+          const ny = Math.sin(b * x) + d * Math.cos(b * y);
+          x = nx; y = ny;
+          const hi = i * 3;
+          attractorPositions3D[hi]   = x * scaleAttr;
+          attractorPositions3D[hi+1] = (y * scaleAttr) * 0.7;
+          attractorPositions3D[hi+2] = Math.sin(i * 0.013) * 12;
+          positions[hi]   = heartPositions3D[hi];
+          positions[hi+1] = heartPositions3D[hi+1];
+          positions[hi+2] = heartPositions3D[hi+2];
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        positionsAttr = geometry.getAttribute('position');
+
+        const material = new THREE.PointsMaterial({
+          size: 1.2,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          color: new THREE.Color(0xF5D7A0)
+        });
+
+        points = new THREE.Points(geometry, material);
+        scene.add(points);
+
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setSize(width, height, false);
+      }
+
+      // ---------- Анимация ----------
+      let lastTime = performance.now();
+
+      function animate(now) {
+        const dt = now - lastTime;
+        lastTime = now;
+        const tSec = now * 0.001;
+
+        // Плавный цикл эры (от 0 до 1 и обратно)
+        const speed = 0.02;
+        eraValue = 0.5 + 0.5 * Math.sin(tSec * speed);
+        eraValue = Math.max(0, Math.min(1, eraValue));
+
+        const cx = width / 2;
+        const cy = height / 2;
+        const baseScale = getBaseScale();
+        const progress2D = eraValue * STAGES_2D;
+
+        // Очистка 2D-холста полупрозрачным белым
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.fillRect(0, 0, width, height);
+
+        const jitterAmp = baseScale * 0.12;
+
+        for (let p of particles) {
+          const basePos = getMorphPosition(progress2D, p.s, cx, cy, baseScale);
+
+          const jx = p.jitterX * jitterAmp * Math.sin(tSec * 0.6 + p.twinklePhase);
+          const jy = p.jitterY * jitterAmp * Math.cos(tSec * 0.6 + p.twinklePhase * 1.37);
+
+          const x = basePos.x + jx;
+          const y = basePos.y + jy;
+
+          const xNorm = width > 0 ? x / width : 0.5;
+          const yNorm = height > 0 ? y / height : 0.5;
+          const hue = (xNorm * 360) % 360;
+          const sat = 60 + 30 * (1 - Math.abs(yNorm - 0.5) * 2);
+          const light = 45 + 20 * (1 - yNorm);
+
+          const stageFactor = 0.4 + 0.6 * (progress2D / STAGES_2D);
+          const alpha = 0.05 + 0.45 * stageFactor;
+
+          ctx.beginPath();
+          ctx.fillStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+          ctx.arc(x, y, p.size, 0, TWO_PI);
+          ctx.fill();
+        }
+
+        // WebGL-часть
+        if (renderer && points && positionsAttr) {
+          const phase3D = Math.min(Math.max((eraValue - 0.8) / 0.2, 0), 1);
+          const posArr = positionsAttr.array;
+          const num = posArr.length / 3;
+
+          let torusPhase, attractPhase;
+          if (phase3D < 0.5) {
+            torusPhase = phase3D * 2;
+            attractPhase = 0;
+          } else {
+            torusPhase = 1;
+            attractPhase = (phase3D - 0.5) * 2;
+          }
+
+          for (let i = 0; i < num; i++) {
+            const hi = i * 3;
+            const hx = heartPositions3D[hi];
+            const hy = heartPositions3D[hi + 1];
+            const hz = heartPositions3D[hi + 2];
+            const tx = torusPositions3D[hi];
+            const ty = torusPositions3D[hi + 1];
+            const tz = torusPositions3D[hi + 2];
+
+            let x = hx + (tx - hx) * torusPhase;
+            let y = hy + (ty - hy) * torusPhase;
+            let z = hz + (tz - hz) * torusPhase;
+
+            if (attractPhase > 0) {
+              const ax = attractorPositions3D[hi];
+              const ay = attractorPositions3D[hi + 1];
+              const az = attractorPositions3D[hi + 2];
+              x = x + (ax - x) * attractPhase;
+              y = y + (ay - y) * attractPhase;
+              z = z + (az - z) * attractPhase;
+            }
+
+            const jitterZ = Math.sin(tSec * 0.7 + i * 0.17) * 1.8 * phase3D;
+            posArr[hi]   = x;
+            posArr[hi+1] = y;
+            posArr[hi+2] = z + jitterZ;
+          }
+          positionsAttr.needsUpdate = true;
+
+          points.material.opacity = phase3D;
+          points.rotation.y += 0.0005 * dt * (0.3 + phase3D);
+          points.rotation.x = Math.sin(tSec * 0.2) * 0.3 * phase3D;
+
+          renderer.render(scene, camera);
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      // ---------- Старт ----------
+      initWebGL();
+      resize();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+
+  <!-- Основной скрипт приложения (без изменений) -->
+  <script src="app.js"></script>
 </body>
 </html>
