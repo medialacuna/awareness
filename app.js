@@ -1,71 +1,3 @@
-// ===== TELEGRAM AUTOLOGIN =====
-async function tgAutoLogin() {
-  const statusEl = document.getElementById("tgAuthStatus");
-  if (!statusEl) return;
-
-  try {
-    // Проверяем, запущено ли приложение в Telegram
-    if (typeof window.Telegram === 'undefined' || !window.Telegram.WebApp) {
-      statusEl.textContent = "❌ Это приложение работает только в Telegram Mini App.";
-      return;
-    }
-
-    const tg = window.Telegram.WebApp;
-    tg.ready(); // сообщаем Telegram, что приложение готово
-
-    const initData = tg.initDataUnsafe;
-    if (!initData || !initData.user) {
-      statusEl.textContent = "❌ Не удалось получить данные пользователя Telegram.";
-      return;
-    }
-
-    const user = initData.user;
-    statusEl.textContent = "⏳ Авторизация...";
-
-    const data = await api("/api/auth/telegram", {
-      method: "POST",
-      body: {
-        telegramId: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name || '',
-        username: user.username || null
-      }
-    });
-
-    setToken(data.token);
-    currentUser = data.user;
-    updateUserUI();
-    showMain(true);
-    tg.expand(); // растягиваем на весь экран
-  } catch (e) {
-    console.error("Telegram auth error:", e);
-    statusEl.textContent = "❌ Ошибка авторизации. Попробуйте перезапустить приложение.";
-  }
-}
-
-// Запуск при загрузке
-(async function init() {
-  const token = localStorage.getItem("hw_awareness_token");
-  if (token) {
-    setToken(token);
-    try {
-      const user = await api("/api/user/me");
-      currentUser = user;
-      updateUserUI();
-      showMain(true);
-      if (window.Telegram?.WebApp) window.Telegram.WebApp.expand();
-      return;
-    } catch (e) {
-      // токен невалидный — удаляем и пытаемся через Telegram
-      setToken(null);
-    }
-  }
-  // Нет токена или он невалидный — запускаем Telegram-авторизацию
-  tgAutoLogin();
-})();
-
-// Удаляем обработчик loginForm
-// loginForm.removeEventListener... (можно просто убрать код)
 const API_BASE = ""; // same origin
 
 let authToken = null;
@@ -160,7 +92,6 @@ const QUIZ_QUESTIONS = [
 
 const authSection = document.getElementById("authSection");
 const mainSection = document.getElementById("mainSection");
-const loginForm = document.getElementById("loginForm");
 const logoutBtn = document.getElementById("logoutBtn");
 
 const profileGreeting = document.getElementById("profileGreeting");
@@ -214,9 +145,10 @@ async function api(path, opts = {}) {
 
 function updateUserUI() {
   if (!currentUser) return;
-  const name = currentUser.email.split("@")[0];
+  // Используем имя из Telegram или username
+  const name = currentUser.telegramName || currentUser.telegramUsername || "друг";
   profileGreeting.textContent = "Привет, " + name + "!";
-  profileEmail.textContent = currentUser.email;
+  profileEmail.textContent = currentUser.telegramId ? "TG ID: " + currentUser.telegramId : "";
   statKarma.textContent = currentUser.karma ?? 0;
   statAwareness.textContent = currentUser.awareness ?? 0;
   statQuiz.textContent = currentUser.quizCorrect ?? 0;
@@ -246,25 +178,38 @@ function spawnClickParticles(containerEl, count = 7) {
     setTimeout(() => span.remove(), 650);
   }
 }
-function isVKMiniApp() {
-  return typeof window.vkBridge !== "undefined";
-}
 
-async function vkAutoLogin() {
-  if (!isVKMiniApp()) return;
+/* ===== TELEGRAM AUTOLOGIN ===== */
+async function tgAutoLogin() {
+  const statusEl = document.getElementById("tgAuthStatus");
+  if (!statusEl) return;
 
   try {
-    const bridge = window.vkBridge;
-    await bridge.send("VKWebAppInit");
-    const userInfo = await bridge.send("VKWebAppGetUserInfo");
+    // Проверяем, запущено ли приложение в Telegram
+    if (typeof window.Telegram === 'undefined' || !window.Telegram.WebApp) {
+      statusEl.textContent = "❌ Это приложение работает только в Telegram Mini App.";
+      return;
+    }
 
-    const data = await api("/api/auth/vk", {
+    const tg = window.Telegram.WebApp;
+    tg.ready(); // сообщаем Telegram, что приложение готово
+
+    const initData = tg.initDataUnsafe;
+    if (!initData || !initData.user) {
+      statusEl.textContent = "❌ Не удалось получить данные пользователя Telegram.";
+      return;
+    }
+
+    const user = initData.user;
+    statusEl.textContent = "⏳ Авторизация...";
+
+    const data = await api("/api/auth/telegram", {
       method: "POST",
       body: {
-        vkId: userInfo.id,
-        firstName: userInfo.first_name,
-        lastName: userInfo.last_name,
-        username: userInfo.screen_name || null
+        telegramId: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name || '',
+        username: user.username || null
       }
     });
 
@@ -272,75 +217,45 @@ async function vkAutoLogin() {
     currentUser = data.user;
     updateUserUI();
     showMain(true);
-
-    const authSection = document.getElementById("authSection");
-    if (authSection) authSection.style.display = "none";
+    tg.expand(); // растягиваем на весь экран
   } catch (e) {
-    console.error("Ошибка VK логина", e);
+    console.error("Telegram auth error:", e);
+    statusEl.textContent = "❌ Ошибка авторизации. Попробуйте перезапустить приложение.";
   }
 }
 
-/* ===== AUTH ===== */
-
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    alert("Введите email и пароль");
-    return;
-  }
-
-  try {
-    // Пробуем логин. Если email не подтверждён — покажем ошибку.
+/* ===== INIT ===== */
+(async function init() {
+  // Сначала пробуем токен из localStorage
+  const token = localStorage.getItem("hw_awareness_token");
+  if (token) {
+    setToken(token);
     try {
-      const data = await api("/api/auth/login", { method: "POST", body: { email, password } });
-      setToken(data.token);
-      currentUser = data.user;
+      const user = await api("/api/user/me");
+      currentUser = user;
       updateUserUI();
       showMain(true);
-      return;
-    } catch (err) {
-      const msg = err.message || "";
-      if (msg.includes("Email не подтверждён")) {
-        alert("Email не подтверждён. Проверь почту — там письмо от HeartWins.");
-        return;
-      }
-      // если ошибка другая (например, пользователь не найден) — пробуем signup
+      if (window.Telegram?.WebApp) window.Telegram.WebApp.expand();
+      return; // успешно
+    } catch (e) {
+      // токен невалидный — удаляем и идём через Telegram
+      setToken(null);
     }
-
-    const signupRes = await api("/api/auth/signup", { method: "POST", body: { email, password } });
-    alert(signupRes.message || "Регистрация успешна. Проверьте почту для подтверждения.");
-  } catch (err) {
-    alert(err.message || "Ошибка авторизации");
   }
-});
+  // Нет токена или он недействителен — авторизация через Telegram
+  tgAutoLogin();
+})();
 
+/* ===== LOGOUT ===== */
 logoutBtn.addEventListener("click", () => {
   currentUser = null;
   setToken(null);
   showMain(false);
+  // Перезапускаем процесс авторизации
+  tgAutoLogin();
 });
 
-/* Авто-подхват токена при загрузке */
-
-(async function initAuthFromStorage() {
-  const token = localStorage.getItem("hw_awareness_token");
-  if (!token) return;
-  setToken(token);
-  try {
-    const user = await api("/api/user/me");
-    currentUser = user;
-    updateUserUI();
-    showMain(true);
-  } catch (e) {
-    setToken(null);
-  }
-})();
-
 /* ===== КЛИКЕР КАРМЫ ===== */
-
 karmaClickBtn.addEventListener("click", async () => {
   if (!currentUser) {
     alert("Сначала войди.");
@@ -364,7 +279,6 @@ karmaClickBtn.addEventListener("click", async () => {
 });
 
 /* ===== КОЛЕСО ОСОЗНАННОСТИ ===== */
-
 spinBtn.addEventListener("click", async () => {
   if (!currentUser) {
     alert("Сначала войди.");
@@ -399,7 +313,6 @@ spinBtn.addEventListener("click", async () => {
 });
 
 /* ===== ВИКТОРИНА ОСОЗНАННОСТИ ===== */
-
 function renderQuiz(questionObj) {
   quizQuoteEl.textContent = questionObj.quote;
   quizQuestionEl.textContent = questionObj.question;
